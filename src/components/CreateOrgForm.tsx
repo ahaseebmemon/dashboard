@@ -4,6 +4,7 @@ import { z } from 'zod';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { supabase } from '../lib/supabase';
 import { Button } from "./ui/button";
+
 // Schema definition updated for Zod v4
 const orgSchema = z.object({
   name: z.string().min(2, 'Company name is required'),
@@ -66,18 +67,21 @@ export function CreateOrgForm({ onCreated }: { onCreated: () => void }) {
   };
 
   return (
-    <div className="bg-white p-6 rounded-lg border border-slate-200 shadow-sm mb-8">
-      <h3 className="text-lg font-bold mb-4">Add New Startup</h3>
+    // 1. Fixed Card Background and Borders
+    <div className="bg-white dark:bg-slate-800 p-6 rounded-lg border border-slate-200 dark:border-slate-700 shadow-sm mb-8 transition-colors">
+      <h3 className="text-lg font-bold mb-4 text-slate-900 dark:text-white">Add New Startup</h3>
       <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
         <div>
-          <label className="block text-sm font-medium mb-1">Company Name</label>
-          <input {...register('name')} className="w-full px-3 py-2 border rounded-md" />
+          <label className="block text-sm font-medium mb-1 text-slate-700 dark:text-slate-200">Company Name</label>
+          {/* 2. Fixed Input Backgrounds and Text */}
+          <input {...register('name')} className="w-full px-3 py-2 border border-slate-300 dark:border-slate-600 rounded-md bg-white dark:bg-slate-900 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-indigo-500" />
           {errors.name && <p className="text-red-500 text-sm">{errors.name.message}</p>}
         </div>
 
         <div>
-          <label className="block text-sm font-medium mb-1">Startup Type</label>
-          <select {...register('type')} className="w-full px-3 py-2 border rounded-md bg-white">
+          <label className="block text-sm font-medium mb-1 text-slate-700 dark:text-slate-200">Startup Type</label>
+          {/* 3. Fixed Select Dropdown Backgrounds and Text */}
+          <select {...register('type')} className="w-full px-3 py-2 border border-slate-300 dark:border-slate-600 rounded-md bg-white dark:bg-slate-900 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-indigo-500">
             <option value="">Select a type...</option>
             <option value="SaaS">SaaS</option>
             <option value="E-Commerce">E-Commerce</option>
@@ -88,8 +92,8 @@ export function CreateOrgForm({ onCreated }: { onCreated: () => void }) {
 
         {selectedType === 'SaaS' && (
           <div>
-            <label className="block text-sm font-medium mb-1">Monthly Subscription Price ($)</label>
-            <input type="number" {...register('subscription_price')} className="w-full px-3 py-2 border rounded-md" />
+            <label className="block text-sm font-medium mb-1 text-slate-700 dark:text-slate-200">Monthly Subscription Price ($)</label>
+            <input type="number" {...register('subscription_price')} className="w-full px-3 py-2 border border-slate-300 dark:border-slate-600 rounded-md bg-white dark:bg-slate-900 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-indigo-500" />
             {errors.subscription_price && <p className="text-red-500 text-sm">{errors.subscription_price.message}</p>}
           </div>
         )}
