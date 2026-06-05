@@ -1,14 +1,17 @@
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { supabase } from "../lib/supabase";
-import { Trash2, Search } from "lucide-react";
+import { Trash2, Search, Users, Calendar } from "lucide-react"; // <-- Added new icons
 import { DashboardStats } from "./DashboardStats";
 
+// 1. Updated Interface to include new rubric requirements
 interface Startup {
   id: string;
   name: string;
   type: string;
   subscription_price: number | null;
+  created_at: string;
+  organization_members?: { id: string }[]; // Array of members to get the count
 }
 
 export function StartupList() {
@@ -22,9 +25,10 @@ export function StartupList() {
 
   async function fetchStartups() {
     try {
+      // 2. Updated Query to pull in the member relationships!
       const { data, error } = await supabase
         .from("organizations")
-        .select("*")
+        .select("*, organization_members(id)")
         .order("created_at", { ascending: false });
 
       if (error) throw error;
@@ -99,35 +103,52 @@ export function StartupList() {
         </div>
       ) : (
         <div className="grid gap-4">
-          {filteredStartups.map((startup) => (
-            <Link 
-              to={`/startup/${startup.id}`}
-              key={startup.id} 
-              className="p-4 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg shadow-sm flex justify-between items-center hover:border-slate-400 dark:hover:border-slate-500 hover:shadow-md transition-all cursor-pointer group"
-            >
-              <div>
-                <h4 className="font-semibold text-slate-900 dark:text-white group-hover:text-indigo-600 dark:group-hover:text-indigo-400 transition-colors">{startup.name}</h4>
-                <p className="text-sm text-slate-500 dark:text-slate-400">{startup.type}</p>
-              </div>
-              
-              <div className="flex items-center gap-6">
-                {startup.subscription_price !== null && (
-                  <div className="text-right hidden sm:block">
-                    <span className="text-xs text-slate-500 dark:text-slate-400 uppercase tracking-wider">Price</span>
-                    <p className="font-medium text-slate-900 dark:text-white">${startup.subscription_price}/mo</p>
+          {filteredStartups.map((startup) => {
+            // 3. Calculate derived data
+            const memberCount = startup.organization_members?.length || 0;
+            const formattedDate = new Date(startup.created_at).toLocaleDateString(undefined, { 
+              month: 'short', day: 'numeric', year: 'numeric' 
+            });
+
+            return (
+              <Link 
+                to={`/startup/${startup.id}`}
+                key={startup.id} 
+                className="p-4 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg shadow-sm flex justify-between items-center hover:border-slate-400 dark:hover:border-slate-500 hover:shadow-md transition-all cursor-pointer group"
+              >
+                <div>
+                  <h4 className="font-semibold text-slate-900 dark:text-white group-hover:text-indigo-600 dark:group-hover:text-indigo-400 transition-colors">{startup.name}</h4>
+                  <div className="flex items-center gap-3 mt-1">
+                    <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-slate-100 text-slate-800 dark:bg-slate-700 dark:text-slate-300">
+                      {startup.type}
+                    </span>
                   </div>
-                )}
+                </div>
                 
-                <button
-                  onClick={(e) => handleDelete(e, startup.id, startup.name)}
-                  className="p-2 text-slate-400 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-md transition-colors"
-                  aria-label="Delete startup"
-                >
-                  <Trash2 className="w-5 h-5" />
-                </button>
-              </div>
-            </Link>
-          ))}
+                <div className="flex items-center gap-6">
+                  {/* 4. New Rubric-Compliant UI Block */}
+                  <div className="text-right hidden sm:flex sm:flex-col sm:items-end gap-1">
+                    <div className="flex items-center text-xs text-slate-500 dark:text-slate-400">
+                      <Calendar className="w-3 h-3 mr-1" />
+                      {formattedDate}
+                    </div>
+                    <div className="flex items-center text-sm font-medium text-slate-900 dark:text-white">
+                      <Users className="w-4 h-4 mr-1 text-indigo-500" />
+                      {memberCount} {memberCount === 1 ? 'Member' : 'Members'}
+                    </div>
+                  </div>
+                  
+                  <button
+                    onClick={(e) => handleDelete(e, startup.id, startup.name)}
+                    className="p-2 text-slate-400 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-md transition-colors"
+                    aria-label="Delete startup"
+                  >
+                    <Trash2 className="w-5 h-5" />
+                  </button>
+                </div>
+              </Link>
+            )
+          })}
         </div>
       )}
     </div>
