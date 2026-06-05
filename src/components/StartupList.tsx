@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { Link } from "react-router-dom"; // <-- We added this
+import { Link } from "react-router-dom";
 import { supabase } from "../lib/supabase";
 
 interface Startup {
@@ -34,36 +34,35 @@ export function StartupList() {
   }
 
   if (loading) {
-    return <div className="mt-8 text-center text-slate-500">Loading startups...</div>;
+    return <div className="mt-8 text-center text-slate-500 dark:text-slate-400">Loading startups...</div>;
   }
 
   if (startups.length === 0) {
     return (
-      <div className="mt-8 text-center p-8 bg-slate-50 rounded-lg border border-slate-200">
-        <p className="text-slate-600">No startups found. Add one above!</p>
+      <div className="mt-8 text-center p-8 bg-slate-50 dark:bg-slate-800/50 rounded-lg border border-slate-200 dark:border-slate-700 transition-colors">
+        <p className="text-slate-600 dark:text-slate-400">No startups found. Add one above!</p>
       </div>
     );
   }
 
   return (
     <div className="mt-8">
-      <h3 className="text-lg font-semibold mb-4 text-slate-900">Your Startups</h3>
+      <h3 className="text-lg font-semibold mb-4 text-slate-900 dark:text-white transition-colors">Your Startups</h3>
       <div className="grid gap-4">
         {startups.map((startup) => (
-          // We changed this div to a Link so it can be clicked!
           <Link 
             to={`/startup/${startup.id}`}
             key={startup.id} 
-            className="p-4 bg-white border border-slate-200 rounded-lg shadow-sm flex justify-between items-center hover:border-slate-400 hover:shadow-md transition-all cursor-pointer group"
+            className="p-4 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg shadow-sm flex justify-between items-center hover:border-slate-400 dark:hover:border-slate-500 hover:shadow-md transition-all cursor-pointer group"
           >
             <div>
-              <h4 className="font-semibold text-slate-900 group-hover:text-blue-600 transition-colors">{startup.name}</h4>
-              <p className="text-sm text-slate-500">{startup.type}</p>
+              <h4 className="font-semibold text-slate-900 dark:text-white group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors">{startup.name}</h4>
+              <p className="text-sm text-slate-500 dark:text-slate-400">{startup.type}</p>
             </div>
             {startup.subscription_price !== null && (
               <div className="text-right">
-                <span className="text-xs text-slate-500 uppercase tracking-wider">Price</span>
-                <p className="font-medium text-slate-900">${startup.subscription_price}/mo</p>
+                <span className="text-xs text-slate-500 dark:text-slate-400 uppercase tracking-wider">Price</span>
+                <p className="font-medium text-slate-900 dark:text-white">${startup.subscription_price}/mo</p>
               </div>
             )}
           </Link>
