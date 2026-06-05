@@ -1,7 +1,8 @@
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { supabase } from "../lib/supabase";
-import { Trash2, Search } from "lucide-react"; // <-- Added Search icon
+import { Trash2, Search } from "lucide-react";
+import { DashboardStats } from "./DashboardStats";
 
 interface Startup {
   id: string;
@@ -13,7 +14,7 @@ interface Startup {
 export function StartupList() {
   const [startups, setStartups] = useState<Startup[]>([]);
   const [loading, setLoading] = useState(true);
-  const [searchQuery, setSearchQuery] = useState(""); // <-- Added state for search
+  const [searchQuery, setSearchQuery] = useState("");
 
   useEffect(() => {
     fetchStartups();
@@ -59,7 +60,6 @@ export function StartupList() {
     }
   };
 
-  // <-- The Magic Filtering Logic! -->
   const filteredStartups = startups.filter((startup) =>
     startup.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
     startup.type.toLowerCase().includes(searchQuery.toLowerCase())
@@ -71,10 +71,12 @@ export function StartupList() {
 
   return (
     <div className="mt-8 mb-20">
+      
+      {startups.length > 0 && <DashboardStats startups={startups} />}
+
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6 gap-4">
         <h3 className="text-lg font-semibold text-slate-900 dark:text-white transition-colors">Your Startups</h3>
         
-        {/* <-- The Search Bar UI --> */}
         <div className="relative w-full sm:w-72">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
           <input
@@ -87,7 +89,6 @@ export function StartupList() {
         </div>
       </div>
 
-      {/* Handle Empty States (No data vs. No search results) */}
       {filteredStartups.length === 0 ? (
         <div className="text-center p-8 bg-slate-50 dark:bg-slate-800/50 rounded-lg border border-slate-200 dark:border-slate-700 transition-colors">
           <p className="text-slate-600 dark:text-slate-400">
@@ -98,7 +99,6 @@ export function StartupList() {
         </div>
       ) : (
         <div className="grid gap-4">
-          {/* Notice we map over filteredStartups, NOT startups! */}
           {filteredStartups.map((startup) => (
             <Link 
               to={`/startup/${startup.id}`}
@@ -133,4 +133,3 @@ export function StartupList() {
     </div>
   );
 }
-
