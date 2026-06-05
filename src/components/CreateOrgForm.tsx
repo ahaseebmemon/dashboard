@@ -27,7 +27,7 @@ type OrgFormInputs = z.infer<typeof orgSchema>;
 export function CreateOrgForm({ onCreated }: { onCreated: () => void }) {
   const [error, setError] = useState<string | null>(null);
   
-  // 1. Initialize the Query Client
+  // Initialize the Query Client
   const queryClient = useQueryClient();
 
   const { register, handleSubmit, watch, formState: { errors }, reset } = useForm<OrgFormInputs>({
@@ -36,7 +36,7 @@ export function CreateOrgForm({ onCreated }: { onCreated: () => void }) {
 
   const selectedType = watch('type');
 
-  // 2. Wrap the database insert in a React Query Mutation
+  // Wrap the database insert in a React Query Mutation
   const createMutation = useMutation({
     mutationFn: async (data: OrgFormInputs) => {
       const { data: { user } } = await supabase.auth.getUser();
@@ -56,10 +56,11 @@ export function CreateOrgForm({ onCreated }: { onCreated: () => void }) {
       if (dbError) throw new Error(dbError.message);
       return data;
     },
-    onSuccess: () => {
+    // THIS IS THE FIX: Added async here!
+    onSuccess: async () => {
       reset();
-      // 3. This is the magic! It tells the list to instantly re-fetch in the background
-      queryClient.invalidateQueries({ queryKey: ["organizations"] });
+      // THIS IS THE FIX: Added await here so the UI waits for the fresh data!
+      await queryClient.invalidateQueries({ queryKey: ["organizations"] });
       onCreated();
     },
     onError: (err: Error) => {
@@ -103,7 +104,6 @@ export function CreateOrgForm({ onCreated }: { onCreated: () => void }) {
 
         {error && <p className="text-red-600 text-sm font-bold">{error}</p>}
 
-        {/* 4. Disable button automatically while React Query is working */}
         <Button type="submit" disabled={createMutation.isPending} className="w-full">
           {createMutation.isPending ? 'Saving...' : 'Create Startup'}
         </Button>
@@ -111,3 +111,4 @@ export function CreateOrgForm({ onCreated }: { onCreated: () => void }) {
     </div>
   );
 }
+

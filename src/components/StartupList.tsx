@@ -1,66 +1,57 @@
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { Link } from "react-router-dom";
 import { supabase } from "../lib/supabase";
-import { Trash2, Search, Users, Calendar } from "lucide-react"; // <-- Added new icons
+import { Trash2, Search, Users, Calendar } from "lucide-react";
 import { DashboardStats } from "./DashboardStats";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 
-// 1. Updated Interface to include new rubric requirements
 interface Startup {
   id: string;
   name: string;
   type: string;
   subscription_price: number | null;
   created_at: string;
-  organization_members?: { id: string }[]; // Array of members to get the count
+  organization_members?: { id: string }[];
 }
 
-export function StartupList() {
-  const [startups, setStartups] = useState<Startup[]>([]);
-  const [loading, setLoading] = useState(true);
+// 1. We added the refreshTrigger prop here!
+export function StartupList({ refreshTrigger = 0 }: { refreshTrigger?: number }) {
   const [searchQuery, setSearchQuery] = useState("");
+  const queryClient = useQueryClient();
 
-  useEffect(() => {
-    fetchStartups();
-  }, []);
-
-  async function fetchStartups() {
-    try {
-      // 2. Updated Query to pull in the member relationships!
+  // 2. Fetch Data with useQuery, watching the refreshTrigger
+  const { data: startups = [], isLoading } = useQuery({
+    queryKey: ["organizations", refreshTrigger], 
+    queryFn: async () => {
       const { data, error } = await supabase
         .from("organizations")
         .select("*, organization_members(id)")
         .order("created_at", { ascending: false });
 
       if (error) throw error;
-      if (data) setStartups(data);
-    } catch (error) {
-      console.error("Error fetching startups:", error);
-    } finally {
-      setLoading(false);
-    }
-  }
+      return data as Startup[];
+    },
+  });
 
-  const handleDelete = async (e: React.MouseEvent, id: string, name: string) => {
+  // 3. Delete Data with useMutation
+  const deleteMutation = useMutation({
+    mutationFn: async (id: string) => {
+      const { error } = await supabase.from("organizations").delete().eq("id", id);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      // Refresh the list after a successful delete
+      queryClient.invalidateQueries({ queryKey: ["organizations"] });
+    },
+    onError: () => {
+      alert("Failed to delete. Please check your Supabase RLS policies.");
+    }
+  });
+
+  const handleDelete = (e: React.MouseEvent, id: string, name: string) => {
     e.preventDefault(); 
-    
-    if (!window.confirm(`Are you sure you want to delete ${name}? This cannot be undone.`)) {
-      return;
-    }
-
-    try {
-      const { error } = await supabase
-        .from("organizations")
-        .delete()
-        .eq("id", id);
-
-      if (error) {
-        alert("Failed to delete. Please check your Supabase RLS policies.");
-        throw error;
-      }
-      
-      setStartups(startups.filter((startup) => startup.id !== id));
-    } catch (error) {
-      console.error("Error deleting startup:", error);
+    if (window.confirm(`Are you sure you want to delete ${name}? This cannot be undone.`)) {
+      deleteMutation.mutate(id);
     }
   };
 
@@ -69,13 +60,12 @@ export function StartupList() {
     startup.type.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
-  if (loading) {
+  if (isLoading) {
     return <div className="mt-8 text-center text-slate-500 dark:text-slate-400">Loading startups...</div>;
   }
 
   return (
     <div className="mt-8 mb-20">
-      
       {startups.length > 0 && <DashboardStats startups={startups} />}
 
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6 gap-4">
@@ -104,7 +94,6 @@ export function StartupList() {
       ) : (
         <div className="grid gap-4">
           {filteredStartups.map((startup) => {
-            // 3. Calculate derived data
             const memberCount = startup.organization_members?.length || 0;
             const formattedDate = new Date(startup.created_at).toLocaleDateString(undefined, { 
               month: 'short', day: 'numeric', year: 'numeric' 
@@ -126,7 +115,6 @@ export function StartupList() {
                 </div>
                 
                 <div className="flex items-center gap-6">
-                  {/* 4. New Rubric-Compliant UI Block */}
                   <div className="text-right hidden sm:flex sm:flex-col sm:items-end gap-1">
                     <div className="flex items-center text-xs text-slate-500 dark:text-slate-400">
                       <Calendar className="w-3 h-3 mr-1" />
@@ -140,7 +128,8 @@ export function StartupList() {
                   
                   <button
                     onClick={(e) => handleDelete(e, startup.id, startup.name)}
-                    className="p-2 text-slate-400 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-md transition-colors"
+                    disabled={deleteMutation.isPending}
+                    className="p-2 text-slate-400 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-md transition-colors disabled:opacity-50"
                     aria-label="Delete startup"
                   >
                     <Trash2 className="w-5 h-5" />
@@ -154,3 +143,4 @@ export function StartupList() {
     </div>
   );
 }
+
