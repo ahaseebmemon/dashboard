@@ -4,8 +4,8 @@ import { z } from 'zod';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { supabase } from '../lib/supabase';
 import { Button } from "./ui/button";
+import { useMutation, useQueryClient } from '@tanstack/react-query';
 
-// Schema definition updated for Zod v4
 const orgSchema = z.object({
   name: z.string().min(2, 'Company name is required'),
   type: z.enum(['SaaS', 'E-Commerce', 'Hardware'], {
@@ -26,7 +26,9 @@ type OrgFormInputs = z.infer<typeof orgSchema>;
 
 export function CreateOrgForm({ onCreated }: { onCreated: () => void }) {
   const [error, setError] = useState<string | null>(null);
-  const [isLoading, setIsLoading] = useState(false);
+  
+  // 1. Initialize the Query Client
+  const queryClient = useQueryClient();
 
   const { register, handleSubmit, watch, formState: { errors }, reset } = useForm<OrgFormInputs>({
     resolver: zodResolver(orgSchema),
@@ -34,53 +36,54 @@ export function CreateOrgForm({ onCreated }: { onCreated: () => void }) {
 
   const selectedType = watch('type');
 
-  const onSubmit = async (data: OrgFormInputs) => {
-    setIsLoading(true);
-    setError(null);
+  // 2. Wrap the database insert in a React Query Mutation
+  const createMutation = useMutation({
+    mutationFn: async (data: OrgFormInputs) => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) throw new Error("You must be logged in.");
 
-    const { data: { user } } = await supabase.auth.getUser();
+      const priceValue = data.type === 'SaaS' && data.subscription_price 
+        ? Number(data.subscription_price) 
+        : null;
 
-    if (!user) {
-      setError("You must be logged in.");
-      setIsLoading(false);
-      return;
-    }
+      const { error: dbError } = await supabase.from('organizations').insert([{
+        name: data.name,
+        type: data.type,
+        subscription_price: priceValue,
+        created_by: user.id,
+      }]);
 
-    const priceValue = data.type === 'SaaS' && data.subscription_price 
-      ? Number(data.subscription_price) 
-      : null;
-
-    const { error: dbError } = await supabase.from('organizations').insert([{
-      name: data.name,
-      type: data.type,
-      subscription_price: priceValue,
-      created_by: user.id,
-    }]);
-
-    if (dbError) {
-      setError(dbError.message);
-    } else {
+      if (dbError) throw new Error(dbError.message);
+      return data;
+    },
+    onSuccess: () => {
       reset();
+      // 3. This is the magic! It tells the list to instantly re-fetch in the background
+      queryClient.invalidateQueries({ queryKey: ["organizations"] });
       onCreated();
+    },
+    onError: (err: Error) => {
+      setError(err.message);
     }
-    setIsLoading(false);
+  });
+
+  const onSubmit = (data: OrgFormInputs) => {
+    setError(null);
+    createMutation.mutate(data);
   };
 
   return (
-    // 1. Fixed Card Background and Borders
     <div className="bg-white dark:bg-slate-800 p-6 rounded-lg border border-slate-200 dark:border-slate-700 shadow-sm mb-8 transition-colors">
       <h3 className="text-lg font-bold mb-4 text-slate-900 dark:text-white">Add New Startup</h3>
       <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
         <div>
           <label className="block text-sm font-medium mb-1 text-slate-700 dark:text-slate-200">Company Name</label>
-          {/* 2. Fixed Input Backgrounds and Text */}
           <input {...register('name')} className="w-full px-3 py-2 border border-slate-300 dark:border-slate-600 rounded-md bg-white dark:bg-slate-900 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-indigo-500" />
           {errors.name && <p className="text-red-500 text-sm">{errors.name.message}</p>}
         </div>
 
         <div>
           <label className="block text-sm font-medium mb-1 text-slate-700 dark:text-slate-200">Startup Type</label>
-          {/* 3. Fixed Select Dropdown Backgrounds and Text */}
           <select {...register('type')} className="w-full px-3 py-2 border border-slate-300 dark:border-slate-600 rounded-md bg-white dark:bg-slate-900 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-indigo-500">
             <option value="">Select a type...</option>
             <option value="SaaS">SaaS</option>
@@ -100,11 +103,11 @@ export function CreateOrgForm({ onCreated }: { onCreated: () => void }) {
 
         {error && <p className="text-red-600 text-sm font-bold">{error}</p>}
 
-        <Button type="submit" disabled={isLoading} className="w-full">
-          {isLoading ? 'Saving...' : 'Create Startup'}
+        {/* 4. Disable button automatically while React Query is working */}
+        <Button type="submit" disabled={createMutation.isPending} className="w-full">
+          {createMutation.isPending ? 'Saving...' : 'Create Startup'}
         </Button>
       </form>
     </div>
   );
 }
-
