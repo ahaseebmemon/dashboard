@@ -43,28 +43,27 @@ export function StartupDetail() {
     setInviteStatus(null);
 
     try {
+      // 1. Ensure the user is logged in before calling the function
       const { data: { session } } = await supabase.auth.getSession();
       if (!session) throw new Error("Not logged in");
 
-      const response = await fetch(
-        `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/invite-member`,
-        {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${session.access_token}`
-          },
-          body: JSON.stringify({ email, organization_id: id })
+      // 2. Call the Edge Function using the Supabase SDK
+      const { data, error } = await supabase.functions.invoke('invite-member', {
+        body: { 
+          email: email, 
+          organization_id: id 
         }
-      );
+      });
 
-      const result = await response.json();
+      // 3. Handle errors returned from the Edge Function
+      if (error) throw new Error(error.message || "Failed to invite");
+      if (data?.error) throw new Error(data.error);
 
-      if (!response.ok) throw new Error(result.error || "Failed to invite");
-
+      // 4. Handle success
       setInviteStatus({ type: 'success', message: `Successfully invited ${email}` });
       setEmail(''); 
-      fetchMembers(); 
+      fetchMembers(); // Refresh the list to show the newly invited member
+      
     } catch (error: any) {
       setInviteStatus({ type: 'error', message: error.message });
     }
@@ -140,3 +139,4 @@ export function StartupDetail() {
     </div>
   );
 }
+
