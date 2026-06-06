@@ -14,14 +14,14 @@ interface Startup {
   organization_members?: { id: string }[];
 }
 
-// 1. We added the refreshTrigger prop here!
-export function StartupList({ refreshTrigger = 0 }: { refreshTrigger?: number }) {
+// Removed the refreshTrigger prop entirely
+export function StartupList() {
   const [searchQuery, setSearchQuery] = useState("");
   const queryClient = useQueryClient();
 
-  // 2. Fetch Data with useQuery, watching the refreshTrigger
+  // Removed refreshTrigger from the queryKey
   const { data: startups = [], isLoading } = useQuery({
-    queryKey: ["organizations", refreshTrigger], 
+    queryKey: ["organizations"], 
     queryFn: async () => {
       const { data, error } = await supabase
         .from("organizations")
@@ -33,14 +33,12 @@ export function StartupList({ refreshTrigger = 0 }: { refreshTrigger?: number })
     },
   });
 
-  // 3. Delete Data with useMutation
   const deleteMutation = useMutation({
     mutationFn: async (id: string) => {
       const { error } = await supabase.from("organizations").delete().eq("id", id);
       if (error) throw error;
     },
     onSuccess: () => {
-      // Refresh the list after a successful delete
       queryClient.invalidateQueries({ queryKey: ["organizations"] });
     },
     onError: () => {

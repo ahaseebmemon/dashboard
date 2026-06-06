@@ -1,4 +1,3 @@
-import { useState } from 'react'; // <-- Add this import
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { LoginForm } from './components/LoginForm';
 import { DashboardLayout } from './components/DashboardLayout';
@@ -8,9 +7,6 @@ import { StartupDetail } from './components/StartupDetail';
 import { ThemeProvider } from "./components/ThemeProvider";
 
 function App() {
-  // 1. The Bulletproof Trigger State
-  const [refreshTrigger, setRefreshTrigger] = useState(0);
-
   return (
     <ThemeProvider defaultTheme="system" storageKey="vite-ui-theme">
       <BrowserRouter>
@@ -26,11 +22,11 @@ function App() {
               <div className="max-w-2xl mx-auto p-4">
                 <h2 className="text-2xl font-semibold mb-6 text-slate-900 dark:text-white transition-colors">Dashboard Management</h2>
                 
-                {/* 2. When created, tick the counter up by 1 */}
-                <CreateOrgForm onCreated={() => setRefreshTrigger(prev => prev + 1)} />
+                {/* No trigger here, just an empty function! */}
+                <CreateOrgForm onCreated={() => {}} />
                 
-                {/* 3. Pass that counter to the list */}
-                <StartupList refreshTrigger={refreshTrigger} />
+                {/* No props passed here! */}
+                <StartupList />
               
               </div>
             } />
