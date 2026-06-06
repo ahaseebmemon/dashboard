@@ -18,8 +18,8 @@ We utilize a two-branch Git workflow (`main` for production, `development` for s
 
 ## 🔑 Test Credentials
 To evaluate the live application without registering a new account, use the following seeded admin credentials:
-- **Email:** `admin@example.com`
-- **Password:** `password123`
+- **Email:** `usmsh111@gmail.com`
+- **Password:** `haseebmemon`
 
 ## ⚙️ 15-Minute Local Setup
 
