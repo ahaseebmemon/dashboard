@@ -14,7 +14,7 @@ const loginSchema = z.object({
 type LoginFormInputs = z.infer<typeof loginSchema>;
 
 export function LoginForm() {
-  const navigate = useNavigate(); // <-- THIS IS THE TELEPORT TOOL THE AI FORGOT
+  const navigate = useNavigate();
   const [authError, setAuthError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
 
@@ -44,37 +44,37 @@ export function LoginForm() {
   };
 
   return (
-    <div className="bg-white p-8 rounded-xl shadow-lg w-full max-w-md border border-slate-100">
+    <div className="bg-white dark:bg-slate-800 p-8 rounded-xl shadow-lg w-full max-w-md border border-slate-100 dark:border-slate-700 transition-colors">
       <div className="text-center mb-8">
-        <h2 className="text-3xl font-bold text-slate-900 tracking-tight">Sign In</h2>
-        <p className="text-slate-500 mt-2">Enter your credentials to access your account</p>
+        <h2 className="text-3xl font-bold text-slate-900 dark:text-white tracking-tight">Sign In</h2>
+        <p className="text-slate-500 dark:text-slate-400 mt-2">Enter your credentials to access your account</p>
       </div>
 
       <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
         <div>
-          <label className="block text-sm font-medium text-slate-700 mb-1">Email</label>
+          <label className="block text-sm font-medium text-slate-700 dark:text-slate-200 mb-1">Email</label>
           <input
             type="email"
             {...register('email')}
-            className="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none transition-all"
+            className="w-full px-4 py-2 border border-slate-300 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-50 focus:ring-2 focus:ring-indigo-500 dark:focus:ring-indigo-400 focus:border-indigo-500 outline-none transition-all"
             placeholder="you@example.com"
           />
           {errors.email && <p className="text-red-500 text-sm mt-1">{errors.email.message}</p>}
         </div>
 
         <div>
-          <label className="block text-sm font-medium text-slate-700 mb-1">Password</label>
+          <label className="block text-sm font-medium text-slate-700 dark:text-slate-200 mb-1">Password</label>
           <input
             type="password"
             {...register('password')}
-            className="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none transition-all"
+            className="w-full px-4 py-2 border border-slate-300 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-50 focus:ring-2 focus:ring-indigo-500 dark:focus:ring-indigo-400 focus:border-indigo-500 outline-none transition-all"
             placeholder="••••••••"
           />
           {errors.password && <p className="text-red-500 text-sm mt-1">{errors.password.message}</p>}
         </div>
 
         {authError && (
-          <div className="p-3 bg-red-50 border border-red-200 text-red-600 rounded-lg text-sm text-center font-medium">
+          <div className="p-3 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 text-red-600 dark:text-red-400 rounded-lg text-sm text-center font-medium">
             {authError}
           </div>
         )}
@@ -90,3 +90,4 @@ export function LoginForm() {
     </div>
   );
 }
+
